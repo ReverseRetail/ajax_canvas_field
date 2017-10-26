@@ -166,9 +166,15 @@ document.addEventListener('DOMContentLoaded', function(){
         document.getElementsByClassName('active canvas_data_field')[0].dataset.initialData = JSON.stringify(tmpData);
       }
 
-      canvas.addEventListener('click', isPixelCollision, false);
-      canvas.addEventListener('auxclick', isPixelCollision, false);
-      canvas.addEventListener('contextmenu', isPixelCollision, false);
+      if (canvas.dataset.leftActive) {
+        canvas.addEventListener('click', isPixelCollision, false);
+      }
+      if (canvas.dataset.middleActive) {
+        canvas.addEventListener('auxclick', isPixelCollision, false);
+      }
+      if (canvas.dataset.rightActive) {
+        canvas.addEventListener('contextmenu', isPixelCollision, false);
+      }
       initCircles();
 
       var tableRows = document.getElementsByClassName('request_row');

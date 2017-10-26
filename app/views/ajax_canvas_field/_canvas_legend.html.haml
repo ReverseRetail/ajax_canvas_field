@@ -12,9 +12,19 @@
         %td.canvas_legend_sub= image_tag('mouse_middle.png', size: '50x50')
         %td.canvas_legend_sub= image_tag('mouse_right.png', size: '50x50')
     %tr
-      %td.canvas_legend_sub= left_text
-      %td.canvas_legend_sub= middle_text
-      %td.canvas_legend_sub= right_text
+      %td.canvas_legend_sub
+        = left_text
+        = " (#{left_initial})" unless left_initial.blank?
+      %td.canvas_legend_sub
+        = middle_text
+        = " (#{middle_initial})" unless middle_initial.blank?
+      %td.canvas_legend_sub
+        = right_text
+        = " (#{right_initial})" unless right_initial.blank?
+    %tr
+      %td.canvas_legend_sub= left_active ? 'Aktiviert' : 'Deaktiviert'
+      %td.canvas_legend_sub= middle_active ? 'Aktiviert' : 'Deaktiviert'
+      %td.canvas_legend_sub= right_active ? 'Aktiviert' : 'Deaktiviert'
     %tr
       %td.canvas_legend_sub{ style: "background-color: #{left_color}" }
       %td.canvas_legend_sub{ style: "background-color: #{middle_color}" }

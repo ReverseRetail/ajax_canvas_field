@@ -22,25 +22,28 @@ module CanvasFieldHelper
   end
 
   def canvas_legend_field(options = {})
-    locals = {
-      left_text: options[:left_text] || '',
-      middle_text: options[:middle_text] || '',
-      right_text: options[:right_text] || '',
-      left_color: options[:left_color] || '#ff0000',
-      middle_color: options[:middle_color] || '#00ff00',
-      right_color: options[:right_color] || '#0000ff',
-      no_icon: options[:no_icon] || false,
-      no_header: options[:no_header] || false
-    }
+    locals = { no_icon: (options[:no_icon] || false), no_header: (options[:no_header] || false) }
+    %w[left middle right].each do |side|
+      locals["#{side}_text".to_sym] = options["#{side}_text"] || ''
+      locals["#{side}_initial".to_sym] = options["#{side}_initial"] || ''
+      locals["#{side}_color".to_sym] = options["#{side}_color"] || '#ff0000'
+      locals["#{side}_active".to_sym] = options["#{side}_active"] || false
+    end
     render partial: 'ajax_canvas_field/canvas_legend', locals: locals
   end
 
   def ro_canvas_field(options = {})
+    data = collect_ro_data(options)
     background_url = options[:background_url].blank? ? '' : "url(#{options[:background_url]})"
     background = "background: #fff #{background_url} no-repeat center top"
+    if options[:half_size]
+      data[:width] = data[:width] / 2
+      data[:height] = data[:height] / 2
+      background += "; background_size: #{data[:width]}px #{data[:height]}px"
+    end
     failure_message = 'Your browser does not support the canvas element.'
 
-    content_tag :canvas, failure_message, data: collect_ro_data(options), style: background, class: 'canvas_field'
+    content_tag :canvas, failure_message, data: data, style: background, class: 'canvas_field'
   end
 
   private
@@ -53,7 +56,10 @@ module CanvasFieldHelper
       height: options[:height] || AjaxCanvasField.config[:default_height],
       left_color: options[:left_color] || '#ff0000',
       middle_color: options[:middle_color] || '#00ff00',
-      right_color: options[:right_color] || '#0000ff' }
+      right_color: options[:right_color] || '#0000ff',
+      left_active: options[:left_active] || false,
+      middle_active: options[:middle_active] || false,
+      right_active: options[:right_active] || false }
   end
 
   def collect_ro_data(options)
