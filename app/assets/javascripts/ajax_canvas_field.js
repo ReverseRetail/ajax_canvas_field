@@ -166,13 +166,13 @@ document.addEventListener('DOMContentLoaded', function(){
         document.getElementsByClassName('active canvas_data_field')[0].dataset.initialData = JSON.stringify(tmpData);
       }
 
-      if (canvas.dataset.leftActive) {
+      if (canvas.dataset.leftActive == 'true') {
         canvas.addEventListener('click', isPixelCollision, false);
       }
-      if (canvas.dataset.middleActive) {
+      if (canvas.dataset.middleActive == 'true') {
         canvas.addEventListener('auxclick', isPixelCollision, false);
       }
-      if (canvas.dataset.rightActive) {
+      if (canvas.dataset.rightActive == 'true') {
         canvas.addEventListener('contextmenu', isPixelCollision, false);
       }
       initCircles();

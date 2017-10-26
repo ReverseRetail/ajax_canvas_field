@@ -39,7 +39,7 @@ module CanvasFieldHelper
     if options[:half_size]
       data[:width] = data[:width] / 2
       data[:height] = data[:height] / 2
-      background += "; background_size: #{data[:width]}px #{data[:height]}px"
+      background += "; background-size: #{data[:width]}px #{data[:height]}px"
     end
     failure_message = 'Your browser does not support the canvas element.'
 
