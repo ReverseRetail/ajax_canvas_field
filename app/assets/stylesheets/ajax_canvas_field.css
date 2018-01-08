@@ -1,8 +1,4 @@
-#canvas_field {
-  border: 1px groove lightgrey;
-}
-
-.canvas_field {
+.canvas_field, .ro_canvas_field {
   border: 1px groove lightgrey;
 }
 

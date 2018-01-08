@@ -8,6 +8,7 @@ class AjaxCanvasFieldGenerator < Rails::Generators::Base
     copy_file "initializer.rb", "config/initializers/ajax_canvas_field.rb"
 
     inject_into_file 'app/assets/javascripts/application.js', "//= require ajax_canvas_field\n", before: "//= require_tree ." rescue nil
+    inject_into_file 'app/assets/javascripts/application.coffee', "//= require ajax_canvas_field\n", before: "//= require_tree ." rescue nil
     inject_into_file 'app/assets/stylesheets/application.scss', " *= require ajax_canvas_field\n", before: " *= require_tree ." rescue nil
     inject_into_file 'app/assets/stylesheets/application.scss.erb', " *= require ajax_canvas_field\n", before: " *= require_tree ." rescue nil
     inject_into_file 'app/assets/stylesheets/application.css.scss', " *= require ajax_canvas_field\n", before: " *= require_tree ." rescue nil

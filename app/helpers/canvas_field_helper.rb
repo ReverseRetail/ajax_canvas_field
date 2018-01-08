@@ -2,22 +2,23 @@
 
 module CanvasFieldHelper
   def canvas_field(options = {})
-    url = '/'
+    url = options[:server].to_s + '/'
     url += options[:namespace].to_s + '/' if options[:namespace]
     url += options[:controller] || 'canvas_fields'
+    url = url.gsub('//', '/')
 
     background_url = options[:background_url].blank? ? '' : "url(#{options[:background_url]})"
     background = "background: #fff #{background_url} no-repeat center top"
     failure_message = 'Your browser does not support the canvas element.'
-
-    content_tag :canvas, failure_message, id: :canvas_field, data: collect_data(url, options), style: background
+    additional_classes = options[:class] || ''
+    content_tag :canvas, failure_message, class: "#{additional_classes} canvas_field", id: options[:id],
+                                          data: collect_data(url, options), style: background
   end
 
   def canvas_data_field(active = false, options = {})
     klass = active ? 'active' : ''
-    data = { additional_data: options[:additional_data].to_json,
-             initial_data: options[:initial_data].to_json,
-             content: options[:content] || '' }
+    data = { additional_data: options[:additional_data].to_json, initial_data: options[:initial_data].to_json,
+             content: options[:content] || '', for: options[:for] }
     content_tag(:span, '', class: "#{klass} canvas_data_field", data: data)
   end
 
@@ -42,8 +43,10 @@ module CanvasFieldHelper
       background += "; background-size: #{data[:width]}px #{data[:height]}px"
     end
     failure_message = 'Your browser does not support the canvas element.'
+    additional_classes = options[:class] || ''
 
-    content_tag :canvas, failure_message, data: data, style: background, class: 'canvas_field'
+    content_tag :canvas, failure_message, class: "#{additional_classes} ro_canvas_field",
+                                          id: options[:id], data: data, style: background
   end
 
   private
@@ -51,7 +54,7 @@ module CanvasFieldHelper
   def collect_data(url, options)
     { url: url,
       strong_param: options[:param] || options[:controller]&.singularize || 'canvas_field',
-      token: options[:token],
+      token: options[:token] || session[:token],
       width: options[:width] || AjaxCanvasField.config[:default_width],
       height: options[:height] || AjaxCanvasField.config[:default_height],
       left_color: options[:left_color] || '#ff0000',
