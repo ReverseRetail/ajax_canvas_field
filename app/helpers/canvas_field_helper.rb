@@ -51,10 +51,14 @@ module CanvasFieldHelper
 
   private
 
+  def access_token
+    session[:authentication]&.token
+  end
+
   def collect_data(url, options)
     { url: url,
       strong_param: options[:param] || options[:controller]&.singularize || 'canvas_field',
-      token: options[:token] || session[:token],
+      token: options[:token] || access_token,
       width: options[:width] || AjaxCanvasField.config[:default_width],
       height: options[:height] || AjaxCanvasField.config[:default_height],
       left_color: options[:left_color] || '#ff0000',

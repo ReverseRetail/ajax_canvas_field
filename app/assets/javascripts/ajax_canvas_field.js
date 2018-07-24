@@ -84,7 +84,7 @@ function deleteAjax(i, canvas, context, points) {
     type: 'DELETE',
     url: canvas.dataset.url + '/' + id,
     headers: {
-      'Authorization': 'Token token=' + canvas.dataset.token
+      'Authorization': 'Bearer ' + canvas.dataset.token
     },
     dataType: "json",
     success: function(data) {
@@ -107,7 +107,7 @@ function createAjax(x, y, e, canvas, context, points) {
     type: 'POST',
     url: canvas.dataset.url,
     headers: {
-      'Authorization': 'Token token=' + canvas.dataset.token
+      'Authorization': 'Bearer ' + canvas.dataset.token
     },
     data: post_data,
     dataType: "json",
