@@ -1,259 +1,255 @@
-function refreshAll(canvas, context, points, e) {
-  points = [];
-  initCircles(canvas, context, points);
-}
-
-function initCircles(canvas, context, points) {
-  var initial_data = JSON.parse(find_data_field(canvas).dataset.initialData);
-  for (i = 0; i < initial_data.length; i++) {
-    var point = buildCircle(initial_data[i][1], initial_data[i][2], initial_data[i][3], canvas);
-    point.database_id = initial_data[i][0];
-    points.push(point);
+class Point {
+  constructor({ x, y, color, id }) {
+    this.x = x;
+    this.y = y;
+    this.color = color;
+    this.offset = 3.5;
+    this.id = id;
   }
-  redrawAllCircles(canvas, context, points);
-  return points;
+
+  toPath() {
+    const { x, y, offset } = this;
+
+    let path = new Path2D();
+    path.arc(x - offset, y - offset, offset * 2, 0, Math.PI * 2);
+    path.x = x;
+    path.y = y;
+    return path;
+  }
+
+  addCircle(x, y, data, e, canvas, context, points) {
+    new_point = buildCircle(x, y, e, canvas);
+    new_point['database_id'] = data.id;
+    points.push(new_point);
+    redrawAllCircles(canvas, context, points);
+  }
 }
 
-function isPixelCollision(canvas, e) {
-  e.preventDefault();
-  if (e.type == "contextmenu")
-    return;
-  var r = canvas.getBoundingClientRect(),
-    context = canvas.getContext('2d'),
-    points = [],
-    x = e.clientX - r.left,
-    y = e.clientY - r.top,
-    removed = false,
-    i;
+class Request {
+  constructor({ points }) {
+    this.points = points.map(p => new Point(p));
+  }
+}
 
-  points = initCircles(canvas, context, points);
-  for (i = points.length - 1; i >= 0; --i) {
-    if (context.isPointInPath(points[i], x, y, 'nonzero')) {
-      deleteAjax(i, canvas, context, points);
-      removed = true;
+class CanvasField {
+  constructor(canvas, options = {}) {
+    this.requests = {};
+    this.canvas = canvas;
+    this.context = canvas.getContext('2d');
+    this.variants = {};
+    this.activeRequestId = null;
+    const { props } = canvas.dataset;
+    if (props) this.importData(props);
+    if (!options.readOnly) this.initClickHandlers();
+  }
+
+  importData(props) {
+    const { requests, variants } = JSON.parse(props);
+    this.requests = requests.reduce((acc, requestData) => {
+      acc[requestData.id] = new Request(this, requestData);
+      return acc;
+    }, {});
+    this.variants = variants;
+    this.activeRequest = Object.keys(this.requests)[0];
+  }
+
+  set activeRequest(id) {
+    const request = this.requests[id];
+    if (!request) throw new Error(`Request with id=${id} not found in data`);
+    this.activeRequestId = parseInt(id);
+    this.render();
+  }
+
+  get activeRequest() {
+    if (!this.activeRequestId) return;
+    return this.requests[this.activeRequestId];
+  }
+
+  get variantOptions() {
+    return this.variants;
+  }
+
+  addPoint({ x, y, e }) {
+    const color = this.colorFromEvent(e);
+    const newPoint = new Point({ x, y, color });
+    this.points.push(newPoint);
+  }
+
+  removePoint(point: Point) {
+
+  }
+
+  colorFromEvent(e) {
+    if (!e) return '#ff0000';
+    const { left, middle, right } = this.variants;
+    switch (e.which) {
+      case 1:
+        return left.color;
+      case 2:
+        return middle.color;
+      case 3:
+        return right.color;
     }
   }
 
-  if (removed == false) {
-    createAjax(x, y, e, canvas, context, points);
-  }
-}
-
-function buildCircle(x, y, e, canvas) {
-  var c = new Path2D(),
-    offset = 3.5;
-
-  c.arc(x - offset, y - offset, 7, 0, Math.PI * 2);
-  c.color = (typeof e === 'string')
-    ? e
-    : chooseColor(e, canvas);
-  c.x = x;
-  c.y = y;
-  return c;
-}
-
-function chooseColor(e, canvas) {
-  if (e === null)
-    return '#ff0000';
-  switch (e.which) {
-    case 1:
-      return canvas.dataset.leftColor;
-    case 2:
-      return canvas.dataset.middleColor;
-    case 3:
-      return canvas.dataset.rightColor;
-  }
-}
-
-function chooseButton(e) {
-  if (e === null)
-    return null;
-  switch (e.which) {
-    case 1:
-      return 'left';
-    case 2:
-      return 'middle';
-    case 3:
-      return 'right';
-  }
-}
-
-function deleteAjax(i, canvas, context, points) {
-  var id = points[i].database_id;
-  $.ajax({
-    type: 'DELETE',
-    url: canvas.dataset.url + '/' + id,
-    headers: {
-      'Authorization': 'Bearer ' + canvas.dataset.token
-    },
-    dataType: "json",
-    success: function(data) {
-      removeCircle(i, data, canvas, context, points);
-    },
-    error: function(data) {
-      alert('No connection to Server');
+  initClickHandlers(canvas) {
+    const { leftActive, middleActive, rightActive } = canvas.dataset;
+    const handler = handleClick.bind(null, canvas);
+    if (leftActive === 'true') {
+      canvas.addEventListener('click', handler, false);
     }
-  });
-}
-
-function removeCircle(i, data, canvas, context, points) {
-  points.splice(i, 1);
-  redrawAllCircles(canvas, context, points);
-}
-
-function createAjax(x, y, e, canvas, context, points) {
-  post_data = collectPostData(x, y, e, canvas, context, points);
-  $.ajax({
-    type: 'POST',
-    url: canvas.dataset.url,
-    headers: {
-      'Authorization': 'Bearer ' + canvas.dataset.token
-    },
-    data: post_data,
-    dataType: "json",
-    success: function(data) {
-      addCircle(x, y, data, e, canvas, context, points);
-    },
-    error: function(data) {
-      alert('No connection to Server');
+    if (middleActive === 'true') {
+      canvas.addEventListener('auxclick', handler, false);
     }
-  });
-}
-
-function collectPostData(x, y, e, canvas, context, points) {
-  var params = {};
-  var param = canvas.dataset.strongParam;
-
-  var additional_data = JSON.parse(find_data_field(canvas).dataset.additionalData);
-  params[param] = {
-    x_value: x,
-    y_value: y,
-    button: chooseButton(e)
-  };
-  for (var attrname in additional_data) {
-    params[param][attrname] = additional_data[attrname];
+    if (rightActive === 'true') {
+      canvas.addEventListener('contextmenu', handler, false);
+    }
   }
-  return params;
+
+
+  handleClick(e) {
+    e.preventDefault();
+    if (e.type === "contextmenu") return;
+    const r = this.canvas.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    const ctx = this.context;
+
+    this.points.forEach(point => {
+      if (ctx.isPointInPath(point.toPath(), x, y, 'nonzero')) {
+        this.deletePoint(point);
+      } else {
+        this.addPoint({ x, y, e })
+      }
+    });
+  }
+
+  clear() {
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  render() {
+    this.clear();
+    const ctx = this.context;
+    const { points } = this.activeRequest;
+    points.forEach(point => {
+      const path = point.toPath();
+      ctx.fillStyle = point.color;
+      ctx.fill(path, 'nonzero');
+      ctx.stroke(path, 'nonzero');
+    })
+  }
 }
 
-function find_data_field(canvas) {
-  var active_datafields = document.getElementsByClassName('active canvas_data_field');
-  var fields = document.querySelectorAll('.canvas_field, .ro_canvas_field');
-  if (active_datafields.length == 1)
+class AjaxCanvas {
+  renderCircles(canvas, context, points) {
+    var initial_data = JSON.parse(find_data_field(canvas).dataset.initialData);
+    points = initial_data.map(record => {
+      const point = buildCircle(record[1], record[2], record[3], canvas);
+      point.database_id = record[0];
+      return point;
+    })
+    redrawAllCircles(canvas, context, points);
+    return points;
+  }
+  refreshAll(canvas, context, points, e) {
+    renderCircles(canvas, context, points);
+  }
+  initCanvas(canvas, dataFields, readOnly = false) {
+    const { width, height } = canvas.dataset;
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    const points = [];
+    renderCircles(canvas, context, points);
+
+    if (!readOnly) initClickHandlers(canvas);
+
+    initDataTableEventListeners(dataFields, canvas, context, points);
+  }
+
+
+  chooseButton(e) {
+    if (!e) return null;
+    switch (e.which) {
+      case 1:
+        return 'left';
+      case 2:
+        return 'middle';
+      case 3:
+        return 'right';
+    }
+  }
+
+  removeCircle(i, data, canvas, context, points) {
+    points.splice(i, 1);
+    redrawAllCircles(canvas, context, points);
+  }
+
+  collectPostData(x, y, e, canvas, context, points) {
+    var params = {};
+    var param = canvas.dataset.strongParam;
+
+    var additional_data = JSON.parse(find_data_field(canvas).dataset.additionalData);
+    params[param] = {
+      x_value: x,
+      y_value: y,
+      button: chooseButton(e)
+    };
+    for (var attrname in additional_data) {
+      params[param][attrname] = additional_data[attrname];
+    }
+    return params;
+  }
+
+  find_data_field(canvas) {
+    var active_datafields = document.getElementsByClassName('active canvas_data_field');
+    var fields = document.querySelectorAll('.canvas_field, .ro_canvas_field');
+    if (active_datafields.length == 1)
+      return active_datafields[0];
+    if (fields.length == 1)
+      return active_datafields[0];
+    var active_id_fields = document.querySelectorAll('.canvas_data_field.active[data-for=' + canvas.id + ']');
+    if (active_id_fields.length == 1)
+      return active_id_fields[0];
     return active_datafields[0];
-  if (fields.length == 1)
-    return active_datafields[0];
-  var active_id_fields = document.querySelectorAll('.canvas_data_field.active[data-for=' + canvas.id + ']');
-  if (active_id_fields.length == 1)
-    return active_id_fields[0];
-  return active_datafields[0];
-}
-
-function addCircle(x, y, data, e, canvas, context, points) {
-  new_point = buildCircle(x, y, e, canvas);
-  new_point['database_id'] = data.id;
-  points.push(new_point);
-  redrawAllCircles(canvas, context, points);
-}
-
-function redrawAllCircles(canvas, context, points) {
-  var tmpData = [];
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  for (i = 0; i < points.length; i++) {
-    context.fillStyle = points[i].color;
-    context.fill(points[i], 'nonzero');
-    context.stroke(points[i], 'nonzero');
-
-    tmpData.push([
-      points[i].database_id,
-      points[i].x,
-      points[i].y,
-      points[i].color
-    ]);
   }
-  find_data_field(canvas).dataset.initialData = JSON.stringify(tmpData);
-}
 
-function handle_data_table(data_fields, canvas, context, points) {
-  var tableRows = document.getElementsByClassName('request_row');
-  var markRequestRow = function() {
-    for (var i = 0; i < tableRows.length; i++) {
-      tableRows[i].classList.remove('active');
+  initDataTableEventListeners(dataFields, canvas, context, points) {
+    const tableRows = document.querySelectorAll('.request_row');
+    tableRows.forEach(requestRow => {
+      addEventListener('click', () => {
+        dataFields.forEach(el => el.classList.remove('active'));
+        tableRows.forEach(el => el.classList.remove('active'));
+        requestRow.classList.add('active');
+        requestRow.querySelector('.canvas_data_field').classList.add('active');
+        refreshAll(canvas, context, points, event);
+      })
+    })
+  }
+
+
+  initCanvasFields() {
+    const canvasFields = document.querySelectorAll('.canvas_field');
+    const readOnlyCanvasFields = document.querySelectorAll('.ro_canvas_field');
+    if (!canvasFields.length && !readOnlyCanvasFields.length) return;
+    const dataFields = document.querySelectorAll('.canvas_data_field');
+    const canvasTables = document.querySelectorAll('.canvas_table');
+    if (!dataFields.length) {
+      console.error('No Data Field found. Please add canvas_data_field in your code!');
+      [canvasFields, readOnlyCanvasFields, canvasTables].forEach(set => {
+        set.forEach(el => { el.style.display = 'none' });
+      });
+      return;
     }
-    for (var i = 0; i < data_fields.length; i++) {
-      data_fields[i].classList.remove('active');
-    }
-    this.classList.add('active');
-    this.getElementsByClassName('canvas_data_field')[0].classList.add('active');
-    refreshAll(canvas, context, points, event);
+
+    canvasFields.forEach(canvas => {
+      initCanvas(canvas, dataFields);
+    });
+
+    readOnlyCanvasFields.forEach(canvas => {
+      initCanvas(canvas, dataFields, true);
+    });
   };
 
-  for (var i = 0; i < tableRows.length; i++) {
-    tableRows[i].addEventListener('click', markRequestRow, false);
-  }
-}
-
-var start_with_canvas_fields = function() {
-  var canvas_fields = document.getElementsByClassName('canvas_field');
-  var ro_canvas_fields = document.getElementsByClassName('ro_canvas_field');
-  var data_fields = document.getElementsByClassName('canvas_data_field');
-  if (canvas_fields.length == 0 && ro_canvas_fields.length == 0) {
-    return;
-  }
-  if (data_fields.length == 0) {
-    console.log('No Data Field found. Please add canvas_data_field in your code!');
-    for (o = 0; o < canvas_table.length; o++) {
-      document.getElementsByClassName('canvas_table')[o].style.display = 'none';
-    }
-    for (o = 0; o < canvas_fields.length; o++) {
-      document.getElementsByClassName('canvas_fields')[o].style.display = 'none';
-    }
-    for (o = 0; o < ro_canvas_fields.length; o++) {
-      document.getElementsByClassName('ro_canvas_fields')[o].style.display = 'none';
-    }
-    return;
-  }
-
-  for (o = 0; o < canvas_fields.length; o++) {
-    var canvas = canvas_fields[o];
-    canvas.width = canvas.dataset.width;
-    canvas.height = canvas.dataset.height;
-    var context = canvas.getContext('2d');
-    var points = [];
-    if (canvas.dataset.leftActive == 'true') {
-      canvas.addEventListener('click', function() {
-        isPixelCollision(this, event)
-      }, false);
-    }
-    if (canvas.dataset.middleActive == 'true') {
-      canvas.addEventListener('auxclick', function() {
-        isPixelCollision(this, event)
-      }, false);
-    }
-    if (canvas.dataset.rightActive == 'true') {
-      canvas.addEventListener('contextmenu', function() {
-        isPixelCollision(this, event)
-      }, false);
-    }
-    initCircles(canvas, context, points);
-
-    handle_data_table(data_fields, canvas, context, points);
-  }
-
-  for (o = 0; o < ro_canvas_fields.length; o++) {
-    var canvas = ro_canvas_fields[o];
-    canvas.width = canvas.dataset.width;
-    canvas.height = canvas.dataset.height;
-    var context = canvas.getContext('2d');
-    var points = [];
-    initCircles(canvas, context, points);
-
-    handle_data_table(data_fields, canvas, context, points);
-  }
-};
-
-if (document.readyState === "complete" || (document.readyState !== "loading" && !document.documentElement.doScroll)) {
-  start_with_canvas_fields();
-} else {
-  document.addEventListener("DOMContentLoaded", start_with_canvas_fields);
 }
