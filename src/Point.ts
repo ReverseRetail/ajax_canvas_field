@@ -1,7 +1,7 @@
 type PointData = {
   x: number,
   y: number,
-  color?: string,
+  color?: string | undefined,
   e?: MouseEvent,
   id?: number
 }
@@ -9,7 +9,7 @@ type PointData = {
 class Point {
   x: number;
   y: number;
-  color: string;
+  color: string | undefined;
   offset: number;
   id?: number;
 
