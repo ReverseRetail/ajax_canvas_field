@@ -22,8 +22,6 @@ export default class EditableField extends CanvasField {
   constructor(canvas: HTMLCanvasElement) {
     super(canvas);
     const { props } = canvas.dataset;
-    this.canvas = canvas;
-    this.context = canvas.getContext('2d');
     this.points = [];
     this.handleClick = this.handleClick.bind(this);
     props && this.importData(props) && this.initClickHandlers();
@@ -67,7 +65,6 @@ export default class EditableField extends CanvasField {
     }
   }
 
-
   colorFromEvent(e: MouseEvent): string {
     const { left, middle, right } = this.variants;
     switch (e.which) {
@@ -82,7 +79,7 @@ export default class EditableField extends CanvasField {
     color = color || this.colorFromEvent(e);
     const newPoint = new Point({ x, y, color });
     this.points.push(newPoint);
-    this.render();
+    this.drawPoint(newPoint);
     return true;
   }
 
@@ -94,6 +91,10 @@ export default class EditableField extends CanvasField {
     if (!pointIndex) return false;
     this.points.splice(pointIndex, 1);
     return true;
+  }
+
+  serialize() {
+    return this.points.map(p => p.serialize());
   }
 
   render() {

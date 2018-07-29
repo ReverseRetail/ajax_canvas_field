@@ -1,6 +1,6 @@
-import { Point, PointData } from './Point';
-import { RequestHash, RequestData, PostProcessingRequest } from './PostProcessingRequest';
-import CanvasField from './CanvasField';
+import { Point } from './Point';
+import { PostProcessingRequest } from './PostProcessingRequest';
+import ReadOnlyField from './ReadOnlyField';
 import EditableField from './EditableField';
 
-export { CanvasField, EditableField, Point, PostProcessingRequest };
+export { ReadOnlyField, EditableField, Point, PostProcessingRequest };

@@ -2,6 +2,7 @@ var path = require('path');
 var webpack = require('webpack');
 
 module.exports = {
+    devtool: 'cheap-source-map',
     entry: {
         main: './index',
     },
@@ -11,6 +12,7 @@ module.exports = {
     output: {
         publicPath: ".",
         path: path.join(__dirname, '../app/assets/javascripts'),
+        devtoolModuleFilenameTemplate: '[absolute-resource-path]',
         filename: 'ajax_canvas_field.js',
         library: 'AjaxCanvasField',
         libraryTarget: 'umd'

@@ -1,4 +1,4 @@
-type PointData = {
+interface PointData {
   x: number,
   y: number,
   color?: string | undefined,
@@ -19,6 +19,11 @@ class Point {
     this.color = color;
     this.offset = 3.5;
     this.id = id;
+  }
+
+  serialize() {
+    const { x, y, color } = this;
+    return { x_value: x, y_value: y, color };
   }
 
   toPath() {

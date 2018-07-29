@@ -1,255 +1,392 @@
-class Point {
-  constructor({ x, y, color, id }) {
-    this.x = x;
-    this.y = y;
-    this.color = color;
-    this.offset = 3.5;
-    this.id = id;
-  }
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else if(typeof exports === 'object')
+		exports["AjaxCanvasField"] = factory();
+	else
+		root["AjaxCanvasField"] = factory();
+})(window, function() {
+return /******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = ".";
+/******/
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = "./index.ts");
+/******/ })
+/************************************************************************/
+/******/ ({
 
-  toPath() {
-    const { x, y, offset } = this;
+/***/ "./CanvasField.ts":
+/*!************************!*\
+  !*** ./CanvasField.ts ***!
+  \************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
-    let path = new Path2D();
-    path.arc(x - offset, y - offset, offset * 2, 0, Math.PI * 2);
-    path.x = x;
-    path.y = y;
-    return path;
-  }
+"use strict";
 
-  addCircle(x, y, data, e, canvas, context, points) {
-    new_point = buildCircle(x, y, e, canvas);
-    new_point['database_id'] = data.id;
-    points.push(new_point);
-    redrawAllCircles(canvas, context, points);
-  }
-}
-
-class Request {
-  constructor({ points }) {
-    this.points = points.map(p => new Point(p));
-  }
-}
-
+Object.defineProperty(exports, "__esModule", { value: true });
 class CanvasField {
-  constructor(canvas, options = {}) {
-    this.requests = {};
-    this.canvas = canvas;
-    this.context = canvas.getContext('2d');
-    this.variants = {};
-    this.activeRequestId = null;
-    const { props } = canvas.dataset;
-    if (props) this.importData(props);
-    if (!options.readOnly) this.initClickHandlers();
-  }
-
-  importData(props) {
-    const { requests, variants } = JSON.parse(props);
-    this.requests = requests.reduce((acc, requestData) => {
-      acc[requestData.id] = new Request(this, requestData);
-      return acc;
-    }, {});
-    this.variants = variants;
-    this.activeRequest = Object.keys(this.requests)[0];
-  }
-
-  set activeRequest(id) {
-    const request = this.requests[id];
-    if (!request) throw new Error(`Request with id=${id} not found in data`);
-    this.activeRequestId = parseInt(id);
-    this.render();
-  }
-
-  get activeRequest() {
-    if (!this.activeRequestId) return;
-    return this.requests[this.activeRequestId];
-  }
-
-  get variantOptions() {
-    return this.variants;
-  }
-
-  addPoint({ x, y, e }) {
-    const color = this.colorFromEvent(e);
-    const newPoint = new Point({ x, y, color });
-    this.points.push(newPoint);
-  }
-
-  removePoint(point: Point) {
-
-  }
-
-  colorFromEvent(e) {
-    if (!e) return '#ff0000';
-    const { left, middle, right } = this.variants;
-    switch (e.which) {
-      case 1:
-        return left.color;
-      case 2:
-        return middle.color;
-      case 3:
-        return right.color;
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.context = canvas.getContext('2d');
     }
-  }
-
-  initClickHandlers(canvas) {
-    const { leftActive, middleActive, rightActive } = canvas.dataset;
-    const handler = handleClick.bind(null, canvas);
-    if (leftActive === 'true') {
-      canvas.addEventListener('click', handler, false);
+    drawPoint(point) {
+        const path = point.toPath();
+        this.context.fillStyle = point.color;
+        this.context.fill(path, 'nonzero');
+        this.context.stroke(path);
+        return true;
     }
-    if (middleActive === 'true') {
-      canvas.addEventListener('auxclick', handler, false);
+    clear() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
-    if (rightActive === 'true') {
-      canvas.addEventListener('contextmenu', handler, false);
-    }
-  }
-
-
-  handleClick(e) {
-    e.preventDefault();
-    if (e.type === "contextmenu") return;
-    const r = this.canvas.getBoundingClientRect();
-    const x = e.clientX - r.left;
-    const y = e.clientY - r.top;
-    const ctx = this.context;
-
-    this.points.forEach(point => {
-      if (ctx.isPointInPath(point.toPath(), x, y, 'nonzero')) {
-        this.deletePoint(point);
-      } else {
-        this.addPoint({ x, y, e })
-      }
-    });
-  }
-
-  clear() {
-    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-  }
-
-  render() {
-    this.clear();
-    const ctx = this.context;
-    const { points } = this.activeRequest;
-    points.forEach(point => {
-      const path = point.toPath();
-      ctx.fillStyle = point.color;
-      ctx.fill(path, 'nonzero');
-      ctx.stroke(path, 'nonzero');
-    })
-  }
 }
-
-class AjaxCanvas {
-  renderCircles(canvas, context, points) {
-    var initial_data = JSON.parse(find_data_field(canvas).dataset.initialData);
-    points = initial_data.map(record => {
-      const point = buildCircle(record[1], record[2], record[3], canvas);
-      point.database_id = record[0];
-      return point;
-    })
-    redrawAllCircles(canvas, context, points);
-    return points;
-  }
-  refreshAll(canvas, context, points, e) {
-    renderCircles(canvas, context, points);
-  }
-  initCanvas(canvas, dataFields, readOnly = false) {
-    const { width, height } = canvas.dataset;
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext('2d');
-    const points = [];
-    renderCircles(canvas, context, points);
-
-    if (!readOnly) initClickHandlers(canvas);
-
-    initDataTableEventListeners(dataFields, canvas, context, points);
-  }
+exports.default = CanvasField;
 
 
-  chooseButton(e) {
-    if (!e) return null;
-    switch (e.which) {
-      case 1:
-        return 'left';
-      case 2:
-        return 'middle';
-      case 3:
-        return 'right';
+/***/ }),
+
+/***/ "./EditableField.ts":
+/*!**************************!*\
+  !*** ./EditableField.ts ***!
+  \**************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const Point_1 = __webpack_require__(/*! ./Point */ "./Point.ts");
+const CanvasField_1 = __importDefault(__webpack_require__(/*! ./CanvasField */ "./CanvasField.ts"));
+class EditableField extends CanvasField_1.default {
+    constructor(canvas) {
+        super(canvas);
+        const { props } = canvas.dataset;
+        this.points = [];
+        this.handleClick = this.handleClick.bind(this);
+        props && this.importData(props) && this.initClickHandlers();
     }
-  }
-
-  removeCircle(i, data, canvas, context, points) {
-    points.splice(i, 1);
-    redrawAllCircles(canvas, context, points);
-  }
-
-  collectPostData(x, y, e, canvas, context, points) {
-    var params = {};
-    var param = canvas.dataset.strongParam;
-
-    var additional_data = JSON.parse(find_data_field(canvas).dataset.additionalData);
-    params[param] = {
-      x_value: x,
-      y_value: y,
-      button: chooseButton(e)
-    };
-    for (var attrname in additional_data) {
-      params[param][attrname] = additional_data[attrname];
+    importData(props) {
+        const { variants } = JSON.parse(props);
+        this.variants = variants;
+        return !!variants;
     }
-    return params;
-  }
-
-  find_data_field(canvas) {
-    var active_datafields = document.getElementsByClassName('active canvas_data_field');
-    var fields = document.querySelectorAll('.canvas_field, .ro_canvas_field');
-    if (active_datafields.length == 1)
-      return active_datafields[0];
-    if (fields.length == 1)
-      return active_datafields[0];
-    var active_id_fields = document.querySelectorAll('.canvas_data_field.active[data-for=' + canvas.id + ']');
-    if (active_id_fields.length == 1)
-      return active_id_fields[0];
-    return active_datafields[0];
-  }
-
-  initDataTableEventListeners(dataFields, canvas, context, points) {
-    const tableRows = document.querySelectorAll('.request_row');
-    tableRows.forEach(requestRow => {
-      addEventListener('click', () => {
-        dataFields.forEach(el => el.classList.remove('active'));
-        tableRows.forEach(el => el.classList.remove('active'));
-        requestRow.classList.add('active');
-        requestRow.querySelector('.canvas_data_field').classList.add('active');
-        refreshAll(canvas, context, points, event);
-      })
-    })
-  }
-
-
-  initCanvasFields() {
-    const canvasFields = document.querySelectorAll('.canvas_field');
-    const readOnlyCanvasFields = document.querySelectorAll('.ro_canvas_field');
-    if (!canvasFields.length && !readOnlyCanvasFields.length) return;
-    const dataFields = document.querySelectorAll('.canvas_data_field');
-    const canvasTables = document.querySelectorAll('.canvas_table');
-    if (!dataFields.length) {
-      console.error('No Data Field found. Please add canvas_data_field in your code!');
-      [canvasFields, readOnlyCanvasFields, canvasTables].forEach(set => {
-        set.forEach(el => { el.style.display = 'none' });
-      });
-      return;
+    initClickHandlers() {
+        const canvas = this.canvas;
+        const { left, middle, right } = this.variants;
+        if (left.active) {
+            canvas.addEventListener('click', this.handleClick, false);
+        }
+        if (middle.active) {
+            canvas.addEventListener('auxclick', this.handleClick, false);
+        }
+        if (right.active) {
+            canvas.addEventListener('contextmenu', this.handleClick, false);
+        }
     }
-
-    canvasFields.forEach(canvas => {
-      initCanvas(canvas, dataFields);
-    });
-
-    readOnlyCanvasFields.forEach(canvas => {
-      initCanvas(canvas, dataFields, true);
-    });
-  };
-
+    handleClick(e) {
+        e.preventDefault();
+        if (e.type === "contextmenu")
+            return;
+        const r = this.canvas.getBoundingClientRect();
+        const x = e.clientX - r.left;
+        const y = e.clientY - r.top;
+        const ctx = this.context;
+        const existingIndex = this.points.findIndex((point) => {
+            return ctx.isPointInPath(point.toPath(), x, y, 'nonzero');
+        });
+        if (existingIndex === -1) {
+            this.addPoint({ x, y, e });
+        }
+        else {
+            this.removePoint(this.points[existingIndex]);
+        }
+    }
+    colorFromEvent(e) {
+        const { left, middle, right } = this.variants;
+        switch (e.which) {
+            case 1: return left.color;
+            case 2: return middle.color;
+            case 3: return right.color;
+            default: return '#ff0000';
+        }
+    }
+    addPoint({ x, y, e, color }) {
+        color = color || this.colorFromEvent(e);
+        const newPoint = new Point_1.Point({ x, y, color });
+        this.points.push(newPoint);
+        this.drawPoint(newPoint);
+        return true;
+    }
+    removePoint(point) {
+        const { x, y } = point;
+        const pointIndex = this.points.findIndex((p) => {
+            return p.x === x && p.y === y;
+        });
+        if (!pointIndex)
+            return false;
+        this.points.splice(pointIndex, 1);
+        return true;
+    }
+    serialize() {
+        return this.points.map(p => p.serialize());
+    }
+    render() {
+        this.clear();
+        const ctx = this.context;
+        this.points.forEach(point => {
+            const path = point.toPath();
+            ctx.fillStyle = point.color;
+            ctx.fill(path, 'nonzero');
+            ctx.stroke(path);
+        });
+    }
 }
+exports.default = EditableField;
+
+
+/***/ }),
+
+/***/ "./Point.ts":
+/*!******************!*\
+  !*** ./Point.ts ***!
+  \******************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+class Point {
+    constructor({ x, y, color, id }) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.offset = 3.5;
+        this.id = id;
+    }
+    serialize() {
+        const { x, y, color } = this;
+        return { x_value: x, y_value: y, color };
+    }
+    toPath() {
+        const { x, y, offset } = this;
+        let path = new Path2D();
+        path.arc(x - offset, y - offset, offset * 2, 0, Math.PI * 2);
+        return path;
+    }
+}
+exports.Point = Point;
+
+
+/***/ }),
+
+/***/ "./PostProcessingRequest.ts":
+/*!**********************************!*\
+  !*** ./PostProcessingRequest.ts ***!
+  \**********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Point_1 = __webpack_require__(/*! ./Point */ "./Point.ts");
+class PostProcessingRequest {
+    constructor({ points }) {
+        this.points = points.map((p) => new Point_1.Point(p));
+    }
+}
+exports.PostProcessingRequest = PostProcessingRequest;
+
+
+/***/ }),
+
+/***/ "./ReadOnlyField.ts":
+/*!**************************!*\
+  !*** ./ReadOnlyField.ts ***!
+  \**************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const CanvasField_1 = __importDefault(__webpack_require__(/*! ./CanvasField */ "./CanvasField.ts"));
+const PostProcessingRequest_1 = __webpack_require__(/*! ./PostProcessingRequest */ "./PostProcessingRequest.ts");
+class ReadOnlyField extends CanvasField_1.default {
+    constructor(canvas) {
+        super(canvas);
+        this.requests = {};
+        this.activeRequestId = null;
+        this.importData(this.canvas.dataset.props);
+        this.initializeRowClickListeners();
+        this.highlightActiveRow();
+    }
+    setActiveRequest(id) {
+        if (this.activeRequestId === Number(id))
+            return;
+        const request = this.requests[id];
+        if (!request)
+            throw new Error(`Request with id=${id} not found in data`);
+        this.activeRequestId = Number(id);
+        this.render();
+        return request;
+    }
+    highlightActiveRow() {
+        if (!this.activeRequestId)
+            return;
+        const activeRow = document.getElementById(`request_row_${this.activeRequestId}`);
+        document.querySelectorAll('.request-row').forEach(el => {
+            el.classList.toggle('is-active', el === activeRow);
+        });
+    }
+    initializeRowClickListeners() {
+        const ids = Object.keys(this.requests);
+        ids.forEach(id => {
+            const row = document.getElementById(`request_row_${id}`);
+            row && row.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.setActiveRequest(id);
+                this.highlightActiveRow();
+            });
+        });
+    }
+    render() {
+        this.clear();
+        const request = this.requests[this.activeRequestId];
+        if (!request)
+            return;
+        request.points.forEach(point => {
+            this.drawPoint(point);
+        });
+    }
+    importData(props) {
+        const { requests } = JSON.parse(props);
+        this.requests = requests.reduce((acc, requestData) => {
+            acc[requestData.id] = new PostProcessingRequest_1.PostProcessingRequest(requestData);
+            return acc;
+        }, {});
+        this.setActiveRequest(Number(Object.keys(this.requests)[0]));
+    }
+}
+exports.default = ReadOnlyField;
+
+
+/***/ }),
+
+/***/ "./index.ts":
+/*!******************!*\
+  !*** ./index.ts ***!
+  \******************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const Point_1 = __webpack_require__(/*! ./Point */ "./Point.ts");
+exports.Point = Point_1.Point;
+const PostProcessingRequest_1 = __webpack_require__(/*! ./PostProcessingRequest */ "./PostProcessingRequest.ts");
+exports.PostProcessingRequest = PostProcessingRequest_1.PostProcessingRequest;
+const ReadOnlyField_1 = __importDefault(__webpack_require__(/*! ./ReadOnlyField */ "./ReadOnlyField.ts"));
+exports.ReadOnlyField = ReadOnlyField_1.default;
+const EditableField_1 = __importDefault(__webpack_require__(/*! ./EditableField */ "./EditableField.ts"));
+exports.EditableField = EditableField_1.default;
+
+
+/***/ })
+
+/******/ });
+});
+//# sourceMappingURL=ajax_canvas_field.js.map
